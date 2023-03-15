@@ -1,27 +1,48 @@
 import socket
 import struct
+from enum import Enum
 
 ETH_P_ALL = 3
 BUFFSIZE = 1518
 
-def ethernet_frame(raw_dados):
-    mac_destino, mac_fonte, protocolo = struct.unpack('! 6s 6s H', raw_dados[:14])
-    return mac_destino, mac_fonte, protocolo
 
-sockd = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
+class Protocolo(Enum):
+    ARP = 0x0806
+    IPV4 = 0x0800
+    IPV6 = 0x86DD
 
-while True:
-    pack = sockd.recv(BUFFSIZE)
-    mac_dest, mac_orig, protocol = ethernet_frame(pack)
-    print('MAC Dest: ', ':'.join(format(x, '02x') for x in mac_dest))
-    print('MAC Orig: ', ':'.join(format(x, '02x') for x in mac_orig))
-    if protocol == 0x0806:
-        print('Tipo: ARP')
-        print(pack[48:64])
-    elif protocol == 0x0800:
-        print('Tipo: IPv4')
-    elif protocol == 0x86DD:
-        print('Tipo: IPv6')
-    else:
-        print('Pacote ignorado')
-    print()
+
+def ler_ethernet(pacote):
+    mac_destino, mac_origem, protocolo = struct.unpack('!6s 6s H', pacote[:14])
+    pacote = pacote[15:]
+    return mac_destino, mac_origem, protocolo
+
+
+def ler_arp(pacote):
+    operacao = struct.unpack('!H', pacote[6:8])
+    return operacao
+
+
+def main():
+    sockd = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
+
+    while True:
+        pacote = sockd.recv(BUFFSIZE)
+        mac_dest, mac_orig, protocolo = ler_ethernet(pacote)
+        print('\nMAC Dest: ', ':'.join(format(x, '02x') for x in mac_dest))
+        print('MAC Orig: ', ':'.join(format(x, '02x') for x in mac_orig))
+        if protocolo == 0x0806:
+            print('Tipo: ARP')
+            operacao = ler_arp(pacote)
+            print(operacao)
+        elif protocolo == 0x0800:
+            print('Tipo: IPv4')
+        elif protocolo == 0x86DD:
+            print('Tipo: IPv6')
+        else:
+            print('Pacote ignorado')
+        print()
+
+
+if __name__ == "__main__":
+    main()
