@@ -81,10 +81,10 @@ def ler_portas_tcp_udp(pacote):
 def main():
     sockd = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
 
-    tabela_tamanhos = Table("Min", "Max", "Media", title="Tamanho dos pacotes")
+    tabela_tamanhos = Table("Min", "Max", "Média", title="Tamanho dos pacotes")
     tabela_rede = Table("Protocolo", "Porcentagem", "Quantidade", title="Nível de Rede")
     tabela_transporte = Table("Protocolo", "Porcentagem", "Quantidade", title="Nível de Transporte")
-    tabela_aplicacao = Table("Protocolo", "Porcentagem", "Quantidade", title="Nível de Aplicacao")
+    tabela_aplicacao = Table("Protocolo", "Porcentagem", "Quantidade", title="Nível de Aplicação")
 
     layout = Layout()
     layout.split_column(
@@ -94,6 +94,42 @@ def main():
         Layout(tabela_aplicacao, name="aplicacao", ratio=2)
     )
 
+    tam = {
+        'min': -1,
+        'max': -1,
+        'med': -1
+    }
+    qtd = {
+        'pacotes': 0,
+        'arp': 0,
+        'arp_req': 0,
+        'arp_rep': 0,
+        'ipv4': 0,
+        'ipv4_udp': 0,
+        'ipv4_udp_dns': 0,
+        'ipv4_udp_dhcp': 0,
+        'ipv4_tcp': 0,
+        'ipv4_tcp_tls': 0,
+        'ipv4_tcp_http': 0,
+        'ipv4_icmp': 0,
+        'ipv4_icmp_echo_req': 0,
+        'ipv4_icmp_echo_rep': 0,
+        'ipv6': 0,
+        'ipv6_udp': 0,
+        'ipv6_tcp': 0,
+        'ipv6_tcp_tls': 0,
+        'ipv6_tcp_http': 0,
+        'ipv6_icmpv6': 0,
+        'ipv6_icmpv6_echo_req': 0,
+        'ipv6_icmpv6_echo_rep': 0,
+    }
+    portas = {
+        'ipv4_tcp': {},
+        'ipv4_udp': {},
+        'ipv6_tcp': {},
+        'ipv6_udp': {}
+    }
+
     with Live(layout, refresh_per_second=1):
         while True:
             try:
@@ -101,34 +137,50 @@ def main():
                 pacote, mac_dest, mac_orig, protocolo_eth = ler_ethernet(pacote)
                 print('\nMAC Dest: ', ':'.join(format(x, '02x') for x in mac_dest))
                 print('MAC Orig: ', ':'.join(format(x, '02x') for x in mac_orig))
+
                 match protocolo_eth:
                     case ProtocoloEthernet.ARP:
-                        print('Tipo: ARP')
+                        qtd['arp'] += 1
                         pacote, operacao = ler_arp(pacote)
-                        print('ARP ', operacao.name)
+                        if operacao == OperacaoARP.Request:
+                            qtd['arp_req'] += 1
+                        elif operacao == OperacaoARP.Reply:
+                            qtd['arp_rep'] += 1
+
                     case ProtocoloEthernet.IPV4:
-                        print('Tipo: IPv4')
+                        qtd['ipv4'] += 1
                         pacote, tamanho, ttl, protocolo_ipv4 = ler_ipv4(pacote)
-                        print('IPv4 ', protocolo_ipv4.name)
                         print('TTL ', ttl)
                         print(tamanho, ' bytes')
+
                         if protocolo_ipv4 == ProtocoloIPv4.ICMP:
+                            qtd['ipv4_icmp'] += 1
                             pacote, tipo = ler_icmp(pacote)
-                            print(tipo.name)
-                        elif protocolo_ipv4 == ProtocoloIPv4.TCP or protocolo_ipv4 == ProtocoloIPv4.UDP:
+                            if tipo == TipoICMP.EchoReply:
+                                qtd['ipv4_icmp_echo_req'] += 1
+                            elif tipo == TipoICMP.EchoRequest:
+                                qtd['ipv4_icmp_echo_req'] += 1
+
+                        else:
                             pacote, porta_orig, porta_dest = ler_portas_tcp_udp(pacote)
-                            print('Porta origem: ', porta_orig)
-                            print('Porta destino: ', porta_dest)
+
+                            if protocolo_ipv4 == ProtocoloIPv4.TCP:
+                                qtd['ipv4_tcp'] += 1
+                            if protocolo_ipv4 == ProtocoloIPv4.UDP:
+                                qtd['ipv4_udp'] += 1
+
                     case ProtocoloEthernet.IPV6:
                         print('Tipo: IPv6')
                         pacote, protocolo_ipv6 = ler_ipv6(pacote)
                         if protocolo_ipv6 == ProtocoloIPv6.ICMPv6:
                             pacote, tipo = ler_icmpv6(pacote)
                             print(tipo.name)
+
                         elif protocolo_ipv6 == ProtocoloIPv6.TCP or protocolo_ipv6 == ProtocoloIPv6.UDP:
                             pacote, porta_orig, porta_dest = ler_portas_tcp_udp(pacote)
                             print('Porta origem: ', porta_orig)
                             print('Porta destino: ', porta_dest)
+
                     case _:
                         print('Pacote ignorado')
                 print()
