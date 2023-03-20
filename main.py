@@ -6,6 +6,8 @@ from enum import Enum
 from rich.layout import Layout
 from rich.live import Live
 from rich.table import Table
+from rich.panel import Panel
+from rich.align import Align
 
 from arvores import atualizar_arvore, raiz as arvore_pacotes
 from quantidade import quantidades as qtd
@@ -101,14 +103,11 @@ def main():
     }
 
     tabela_tamanhos = Table("Min", "Max", "Média", title="Tamanho dos pacotes")
-    tabela_rede = Table("Protocolo", "Porcentagem", "Quantidade", title="Nível de Rede")
-    tabela_transporte = Table("Protocolo", "Porcentagem", "Quantidade", title="Nível de Transporte")
-    tabela_aplicacao = Table("Protocolo", "Porcentagem", "Quantidade", title="Nível de Aplicação")
 
     layout = Layout()
     layout.split_column(
-        Layout(tabela_tamanhos, name="tamanhos", ratio=1, minimum_size=6),
-        Layout(arvore_pacotes(), name="pacotes", ratio=3),
+        Layout(Panel(Align.center(tabela_tamanhos)), name="tamanhos", ratio=1, minimum_size=6),
+        Layout(Panel(Align.center(arvore_pacotes())), name="pacotes", ratio=3),
     )
 
     with Live(layout, refresh_per_second=1):
