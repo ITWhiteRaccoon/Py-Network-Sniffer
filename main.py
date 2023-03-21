@@ -1,15 +1,13 @@
 import socket
 import struct
-from collections import defaultdict
 from enum import Enum
 
 from rich.layout import Layout
 from rich.live import Live
-from rich.table import Table
 from rich.panel import Panel
 from rich.align import Align
 
-from arvores import atualizar_arvore, raiz as arvore_pacotes
+from arvores import atualizar_arvore, atualizar_tabela, portas, tam, tabela_tamanhos, pacotes as arvore_pacotes
 from quantidade import quantidades as qtd
 
 ETH_P_ALL = 3
@@ -32,10 +30,6 @@ class ProtocoloIPv6(Enum):
     TCP = 6
     UDP = 17
     ICMPv6 = 58
-
-
-class Portas(Enum):
-    http = 80
 
 
 class OperacaoARP(Enum):
@@ -92,22 +86,10 @@ def ler_portas_tcp_udp(pacote):
 def main():
     sockd = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
 
-    tam = {
-        'min': -1,
-        'max': -1,
-        'med': -1
-    }
-    portas = {
-        'tcp': defaultdict(int),
-        'udp': defaultdict(int)
-    }
-
-    tabela_tamanhos = Table("Min", "Max", "Média", title="Tamanho dos pacotes")
-
     layout = Layout()
     layout.split_column(
         Layout(Panel(Align.center(tabela_tamanhos)), name="tamanhos", ratio=1, minimum_size=6),
-        Layout(Panel(Align.center(arvore_pacotes())), name="pacotes", ratio=3),
+        Layout(Panel(Align.center(arvore_pacotes)), name="pacotes", ratio=3),
     )
 
     with Live(layout, refresh_per_second=1):
@@ -115,6 +97,15 @@ def main():
             try:
                 pacote = sockd.recv(BUFFSIZE)
                 qtd['pacotes'] += 1
+
+                tam_pacote = len(pacote) / 8 if len(pacote) > 0 else len(pacote)
+                tam['valores'].append(tam_pacote)
+                tam['med'] = sum(tam['valores']) / len(tam['valores'])
+                if tam['min'] == -1 or tam_pacote < tam['min']:
+                    tam['min'] = tam_pacote
+                if tam['max'] == -1 or tam_pacote > tam['max']:
+                    tam['max'] = tam_pacote
+
                 pacote, _, _, protocolo_eth = ler_ethernet(pacote)
                 match protocolo_eth:
                     case ProtocoloEthernet.ARP:
@@ -139,11 +130,19 @@ def main():
                             if protocolo_ipv4 == ProtocoloIPv4.TCP:
                                 qtd['ipv4_tcp'] += 1
                                 portas['tcp'][porta_dest] += 1
-                                if porta_dest == Portas.http:
+                                if porta_dest == 80 or porta_orig == 80:
                                     qtd['ipv4_tcp_http'] += 1
+                                if porta_dest == 443 or porta_orig == 443:
+                                    qtd['ipv4_tcp_https'] += 1
+                                if porta_dest == 53 or porta_orig == 53:
+                                    qtd['ipv4_tcp_dns'] += 1
                             if protocolo_ipv4 == ProtocoloIPv4.UDP:
                                 qtd['ipv4_udp'] += 1
                                 portas['udp'][porta_dest] += 1
+                                if porta_dest == 53 or porta_orig == 53:
+                                    qtd['ipv4_udp_dns'] += 1
+                                if porta_dest == 67 or porta_orig == 67 or porta_dest == 68 or porta_orig == 68:
+                                    qtd['ipv4_udp_dhcp'] += 1
 
                     case ProtocoloEthernet.IPV6:
                         qtd['ipv6'] += 1
@@ -157,13 +156,22 @@ def main():
                             if protocolo_ipv6 == ProtocoloIPv6.TCP:
                                 qtd['ipv6_tcp'] += 1
                                 portas['tcp'][porta_dest] += 1
-                                if porta_dest == Portas.http:
+                                if porta_dest == 80 or porta_orig == 80:
                                     qtd['ipv6_tcp_http'] += 1
+                                if porta_dest == 443 or porta_orig == 443:
+                                    qtd['ipv6_tcp_https'] += 1
+                                if porta_dest == 53 or porta_orig == 53:
+                                    qtd['ipv6_tcp_dns'] += 1
                             if protocolo_ipv6 == ProtocoloIPv6.UDP:
                                 qtd['ipv6_udp'] += 1
                                 portas['udp'][porta_dest] += 1
+                                if porta_dest == 53 or porta_orig == 53:
+                                    qtd['ipv6_udp_dns'] += 1
+                                if porta_dest == 67 or porta_orig == 67 or porta_dest == 68 or porta_orig == 68:
+                                    qtd['ipv6_udp_dhcp'] += 1
 
                 atualizar_arvore()
+                atualizar_tabela()
                 print()
             except ValueError:
                 continue
