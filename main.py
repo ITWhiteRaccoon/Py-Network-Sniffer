@@ -1,13 +1,14 @@
 import socket
 import struct
 from enum import Enum
-
 from rich.align import Align
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
+from rich.columns import Columns
+from rich.text import Text
 
-from util import atualizar_arvore, atualizar_tabela, portas, tam, tabela_tamanhos, pacotes as arvore_pacotes, qtd
+from util import tam, portas, qtd, atualizar_pacotes, atualizar_portas, atualizar_tamanhos
 
 ETH_P_ALL = 3
 BUFFSIZE = 1518
@@ -54,7 +55,7 @@ def ler_arp(pacote):
 def ler_ipv4(pacote):
     tamanho, = struct.unpack('!H', pacote[2:4])
     ttl, protocolo = struct.unpack('!BB', pacote[8:10])
-    return pacote[24:], tamanho, ttl, ProtocoloIP(protocolo)
+    return pacote[20:], tamanho, ttl, ProtocoloIP(protocolo)
 
 
 def ler_ipv6(pacote):
@@ -80,10 +81,18 @@ def ler_portas_tcp_udp(pacote):
 def main():
     sockd = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
 
+    arvore_pacotes = atualizar_pacotes()
+    arvore_portas = atualizar_portas()
+    tamanhos = atualizar_tamanhos()
+
     layout = Layout()
-    layout.split_column(
-        Layout(Panel(Align.center(tabela_tamanhos)), name="tamanhos", ratio=1, minimum_size=6),
-        Layout(Panel(Align.center(arvore_pacotes)), name="pacotes", ratio=3),
+    layout.split_row(
+        Layout(name='left'),
+        Layout(Panel(Align.center(arvore_pacotes), title=Text('Tipos de pacotes', 'green'), padding=1), name='right'),
+    )
+    layout['left'].split_column(
+        Layout(Panel(Align.center(Columns(tamanhos)), title=Text('Tamanho dos pacotes', 'green'), padding=1), name='top'),
+        Layout(Panel(Align.center(arvore_portas), title=Text('Portas mais acessadas', 'green'), padding=1), name='bottom')
     )
 
     with Live(layout, refresh_per_second=1):
@@ -92,13 +101,12 @@ def main():
                 pacote = sockd.recv(BUFFSIZE)
                 qtd['pacotes'] += 1
 
-                tam_pacote = len(pacote) / 8 if len(pacote) > 0 else len(pacote)
-                tam['valores'].append(tam_pacote)
+                tam['valores'].append(len(pacote))
                 tam['med'] = sum(tam['valores']) / len(tam['valores'])
-                if tam['min'] == -1 or tam_pacote < tam['min']:
-                    tam['min'] = tam_pacote
-                if tam['max'] == -1 or tam_pacote > tam['max']:
-                    tam['max'] = tam_pacote
+                if tam['min'] == -1 or len(pacote) < tam['min']:
+                    tam['min'] = len(pacote)
+                if tam['max'] == -1 or len(pacote) > tam['max']:
+                    tam['max'] = len(pacote)
 
                 pacote, _, _, protocolo_eth = ler_ethernet(pacote)
                 nome_pacote = protocolo_eth.name
@@ -126,7 +134,7 @@ def main():
 
                     case ProtocoloEthernet.ipv6:
                         pacote, protocolo_ip = ler_ipv6(pacote)
-                        nome_pacote += f'_{protocolo_ip}'
+                        nome_pacote += f'_{protocolo_ip.name}'
                         qtd[nome_pacote] += 1
 
                         if protocolo_ip == ProtocoloIP.icmpv6:
@@ -138,9 +146,10 @@ def main():
                             pacote, porta_orig, porta_dest = ler_portas_tcp_udp(pacote)
                             contar_tcp_udp(nome_pacote, porta_dest, porta_orig, protocolo_ip)
 
-                atualizar_arvore()
-                atualizar_tabela()
-                print()
+                arvore_pacotes = atualizar_pacotes()
+                arvore_portas = atualizar_portas()
+                tamanhos = atualizar_tamanhos()
+                layout['left'].update(tamanhos)
             except ValueError:
                 continue
 
