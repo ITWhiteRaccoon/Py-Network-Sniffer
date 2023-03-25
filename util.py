@@ -1,4 +1,5 @@
 from collections import defaultdict
+
 from rich.table import Table
 from rich.tree import Tree
 
@@ -26,9 +27,9 @@ arvore['ipv4_udp'] = Galho(arvore['ipv4'].tree.add("UDP - 0 (0%)"), 'UDP - {0} (
 arvore['ipv4_udp_dns'] = Galho(arvore['ipv4_udp'].tree.add("DNS - 0 (0%)"), 'DNS - {0} ({1})')
 arvore['ipv4_udp_dhcp'] = Galho(arvore['ipv4_udp'].tree.add("DHCP - 0 (0%)"), 'DHCP - {0} ({1})')
 arvore['ipv6'] = Galho(pacotes.add("IPv6 - 0 (0%)"), 'IPv6 - {0} ({1})')
-arvore['ipv6_icmp'] = Galho(arvore['ipv6'].tree.add("ICMPv6 - 0 (0%)"), 'ICMPv6 - {0} ({1})')
-arvore['ipv6_icmp_echo_req'] = Galho(arvore['ipv6_icmp'].tree.add("Echo Request - 0 (0%)"), 'Echo Request - {0} ({1})')
-arvore['ipv6_icmp_echo_rep'] = Galho(arvore['ipv6_icmp'].tree.add("Echo Reply - 0 (0%)"), 'Echo Reply - {0} ({1})')
+arvore['ipv6_icmpv6'] = Galho(arvore['ipv6'].tree.add("ICMPv6 - 0 (0%)"), 'ICMPv6 - {0} ({1})')
+arvore['ipv6_icmpv6_echo_req'] = Galho(arvore['ipv6_icmpv6'].tree.add("Echo Request - 0 (0%)"), 'Echo Request - {0} ({1})')
+arvore['ipv6_icmpv6_echo_rep'] = Galho(arvore['ipv6_icmpv6'].tree.add("Echo Reply - 0 (0%)"), 'Echo Reply - {0} ({1})')
 arvore['ipv6_tcp'] = Galho(arvore['ipv6'].tree.add("TCP - 0 (0%)"), 'TCP - {0} ({1})')
 arvore['ipv6_tcp_http'] = Galho(arvore['ipv6_tcp'].tree.add("HTTP - 0 (0%)"), 'HTTP - {0} ({1})')
 arvore['ipv6_tcp_https'] = Galho(arvore['ipv6_tcp'].tree.add("HTTPS - 0 (0%)"), 'HTTPS - {0} ({1})')
@@ -68,58 +69,33 @@ def atualizar_arvore():
     pacotes.label = f"Pacotes - {qtd['pacotes']}"
     for galho in arvore:
         arvore[galho].tree.label = arvore[galho].text.format(qtd[galho], porcentagem_de(qtd[galho], qtd['pacotes']))
-    # arp.label = f"ARP - {qtd['arp']} ({porcentagem_de(qtd['arp'], qtd['pacotes'])})"
-    # arp_req.label = f"Request - {qtd['arp_req']} ({porcentagem_de(qtd['arp_req'], qtd['pacotes'])})"
-    # arp_rep.label = f"Reply - {qtd['arp_rep']} ({porcentagem_de(qtd['arp_rep'], qtd['pacotes'])})"
-    # ipv4.label = f"IPv4 - {qtd['ipv4']} ({porcentagem_de(qtd['ipv4'], qtd['pacotes'])})"
-    # ipv4_icmp.label = f"ICMP - {qtd['ipv4_icmp']} ({porcentagem_de(qtd['ipv4_icmp'], qtd['pacotes'])})"
-    # ipv4_icmp_echo_req.label = f"Echo Request - {qtd['ipv4_icmp_echo_req']} ({porcentagem_de(qtd['ipv4_icmp_echo_req'], qtd['pacotes'])})"
-    # ipv4_icmp_echo_rep.label = f"Echo Reply - {qtd['ipv4_icmp_echo_rep']} ({porcentagem_de(qtd['ipv4_icmp_echo_rep'], qtd['pacotes'])})"
-    # ipv4_tcp.label = f"TCP - {qtd['ipv4_tcp']} ({porcentagem_de(qtd['ipv4_tcp'], qtd['pacotes'])})"
-    # ipv4_tcp_http.label = f"HTTP - {qtd['ipv4_tcp_http']} ({porcentagem_de(qtd['ipv4_tcp_http'], qtd['pacotes'])})"
-    # ipv4_tcp_https.label = f"HTTPS - {qtd['ipv4_tcp_https']} ({porcentagem_de(qtd['ipv4_tcp_https'], qtd['pacotes'])})"
-    # ipv4_tcp_dns.label = f"DNS - {qtd['ipv4_tcp_dns']} ({porcentagem_de(qtd['ipv4_tcp_dns'], qtd['pacotes'])})"
-    # ipv4_udp.label = f"UDP - {qtd['ipv4_udp']} ({porcentagem_de(qtd['ipv4_udp'], qtd['pacotes'])})"
-    # ipv4_udp_dns.label = f"DNS - {qtd['ipv4_udp_dns']} ({porcentagem_de(qtd['ipv4_udp_dns'], qtd['pacotes'])})"
-    # ipv4_udp_dhcp.label = f"DHCP - {qtd['ipv4_udp_dhcp']} ({porcentagem_de(qtd['ipv4_udp_dhcp'], qtd['pacotes'])})"
-    # ipv6.label = f"IPv6 - {qtd['ipv6']} ({porcentagem_de(qtd['ipv6'], qtd['pacotes'])})"
-    # ipv6_icmp.label = f"ICMPv6 - {qtd['ipv6_icmp']} ({porcentagem_de(qtd['ipv6_icmp'], qtd['pacotes'])})"
-    # ipv6_icmp_echo_req.label = f"Echo Request - {qtd['ipv6_icmp_echo_req']} ({porcentagem_de(qtd['ipv6_icmp_echo_req'], qtd['pacotes'])})"
-    # ipv6_icmp_echo_rep.label = f"Echo Reply - {qtd['ipv6_icmp_echo_rep']} ({porcentagem_de(qtd['ipv6_icmp_echo_rep'], qtd['pacotes'])})"
-    # ipv6_tcp.label = f"TCP - {qtd['ipv6_tcp']} ({porcentagem_de(qtd['ipv6_tcp'], qtd['pacotes'])})"
-    # ipv6_tcp_http.label = f"HTTP - {qtd['ipv6_tcp_http']} ({porcentagem_de(qtd['ipv6_tcp_http'], qtd['pacotes'])})"
-    # ipv6_tcp_https.label = f"HTTPS - {qtd['ipv6_tcp_https']} ({porcentagem_de(qtd['ipv6_tcp_https'], qtd['pacotes'])})"
-    # ipv6_tcp_dns.label = f"DNS - {qtd['ipv6_tcp_dns']} ({porcentagem_de(qtd['ipv6_tcp_dns'], qtd['pacotes'])})"
-    # ipv6_udp.label = f"UDP - {qtd['ipv6_udp']} ({porcentagem_de(qtd['ipv6_udp'], qtd['pacotes'])})"
-    # ipv6_udp_dns.label = f"DNS - {qtd['ipv6_udp_dns']} ({porcentagem_de(qtd['ipv6_udp_dns'], qtd['pacotes'])})"
-    # ipv6_udp_dhcp.label = f"DHCP - {qtd['ipv6_udp_dhcp']} ({porcentagem_de(qtd['ipv6_udp_dhcp'], qtd['pacotes'])})"
 
 
 qtd = {
-    'pacotes'           : 0,
-    'arp'               : 0,
-    'arp_req'           : 0,
-    'arp_rep'           : 0,
-    'ipv4'              : 0,
-    'ipv4_icmp'         : 0,
-    'ipv4_icmp_echo_req': 0,
-    'ipv4_icmp_echo_rep': 0,
-    'ipv4_tcp'          : 0,
-    'ipv4_tcp_http'     : 0,
-    'ipv4_tcp_https'    : 0,
-    'ipv4_tcp_dns'      : 0,
-    'ipv4_udp'          : 0,
-    'ipv4_udp_dns'      : 0,
-    'ipv4_udp_dhcp'     : 0,
-    'ipv6'              : 0,
-    'ipv6_icmp'         : 0,
-    'ipv6_icmp_echo_req': 0,
-    'ipv6_icmp_echo_rep': 0,
-    'ipv6_tcp'          : 0,
-    'ipv6_tcp_http'     : 0,
-    'ipv6_tcp_https'    : 0,
-    'ipv6_tcp_dns'      : 0,
-    'ipv6_udp'          : 0,
-    'ipv6_udp_dns'      : 0,
-    'ipv6_udp_dhcp'     : 0,
+    'pacotes'             : 0,
+    'arp'                 : 0,
+    'arp_req'             : 0,
+    'arp_rep'             : 0,
+    'ipv4'                : 0,
+    'ipv4_icmp'           : 0,
+    'ipv4_icmp_echo_req'  : 0,
+    'ipv4_icmp_echo_rep'  : 0,
+    'ipv4_tcp'            : 0,
+    'ipv4_tcp_http'       : 0,
+    'ipv4_tcp_https'      : 0,
+    'ipv4_tcp_dns'        : 0,
+    'ipv4_udp'            : 0,
+    'ipv4_udp_dns'        : 0,
+    'ipv4_udp_dhcp'       : 0,
+    'ipv6'                : 0,
+    'ipv6_icmpv6'         : 0,
+    'ipv6_icmpv6_echo_req': 0,
+    'ipv6_icmpv6_echo_rep': 0,
+    'ipv6_tcp'            : 0,
+    'ipv6_tcp_http'       : 0,
+    'ipv6_tcp_https'      : 0,
+    'ipv6_tcp_dns'        : 0,
+    'ipv6_udp'            : 0,
+    'ipv6_udp_dns'        : 0,
+    'ipv6_udp_dhcp'       : 0,
 }
