@@ -7,8 +7,7 @@ from rich.live import Live
 from rich.panel import Panel
 from rich.align import Align
 
-from arvores import atualizar_arvore, atualizar_tabela, portas, tam, tabela_tamanhos, pacotes as arvore_pacotes
-from quantidade import quantidades as qtd
+from util import atualizar_arvore, atualizar_tabela, portas, tam, tabela_tamanhos, pacotes as arvore_pacotes, qtd
 
 ETH_P_ALL = 3
 BUFFSIZE = 1518
