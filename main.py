@@ -86,13 +86,20 @@ def main():
     tamanhos = atualizar_tamanhos()
 
     layout = Layout()
-    layout.split_row(
+    layout.split_column(
+        Layout(Panel(
+            Align.center('Eduardo Andrade & João Dall Agnol', vertical='middle'),
+            title=Text('Laboratório de Redes de Computadores - T1', 'green')), name='header', size=5
+        ),
+        Layout(name='body')
+    )
+    layout['body'].split_row(
         Layout(name='left'),
         Layout(Panel(Align.center(arvore_pacotes), title=Text('Tipos de pacotes', 'green'), padding=1), name='right'),
     )
     layout['left'].split_column(
-        Layout(Panel(Align.center(Columns(tamanhos)), title=Text('Tamanho dos pacotes', 'green'), padding=1), name='top'),
-        Layout(Panel(Align.center(arvore_portas), title=Text('Portas mais acessadas', 'green'), padding=1), name='bottom')
+        Layout(Panel(Align.center(Columns(tamanhos)), title=Text('Tamanho dos pacotes', 'green'), padding=1), name='top', ratio=1),
+        Layout(Panel(Align.center(arvore_portas), title=Text('Portas mais acessadas', 'green'), padding=1), name='bottom', ratio=2)
     )
 
     with Live(layout, refresh_per_second=1):
