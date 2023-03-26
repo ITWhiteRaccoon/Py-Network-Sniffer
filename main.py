@@ -1,11 +1,12 @@
 import socket
 import struct
 from enum import Enum
+
 from rich.align import Align
+from rich.columns import Columns
 from rich.layout import Layout
 from rich.live import Live
 from rich.panel import Panel
-from rich.columns import Columns
 from rich.text import Text
 
 from util import tam, portas, qtd, atualizar_pacotes, atualizar_portas, atualizar_tamanhos

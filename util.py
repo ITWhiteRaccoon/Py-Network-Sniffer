@@ -1,10 +1,11 @@
 import heapq
 from collections import defaultdict
 from operator import itemgetter
-from rich.panel import Panel
-from rich.tree import Tree
+
 from rich.align import Align
+from rich.panel import Panel
 from rich.text import Text
+from rich.tree import Tree
 
 
 class Galho:
